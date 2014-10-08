@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<org.gongming.common.SwipeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:background="#FFFFFF"
+        >
+        <org.gongming.common.FlowLayout
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:id="@+id/flowLayout"
+            >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="hahahah"
+                android:background="#7E7EFF"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="This is a amazing layout"
+                android:background="#7E7EFF"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Where is this layout"
+                android:background="#7E7EFF"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Oh, God. Please save me. I'm the cool layout"
+                android:background="#7E7EFF"
+                />
+        </org.gongming.common.FlowLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#0092F4"
+        >
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/sample_long_text"
+            />
+    </LinearLayout>
+
+</org.gongming.common.SwipeLayout>

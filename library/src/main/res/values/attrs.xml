@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="RatioLayout">
+        <!--The ratio defines the value of height / width -->
+        <attr name="ratio" format="float" />
+    </declare-styleable>
+
+</resources>
