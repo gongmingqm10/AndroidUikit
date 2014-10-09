@@ -1,22 +1,16 @@
 package org.gongming.common;
 
 import android.content.Context;
-import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.animation.TranslateAnimation;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
 public class SwipeLayout extends FrameLayout {
-
-    private Animation upAnimOut, upAnimIn, downAnimIn, downAnimOut;
-    private Context context;
 
     //TODO this view should support more than two children and care more about the margin of its children
     public SwipeLayout(Context context) {
@@ -25,171 +19,172 @@ public class SwipeLayout extends FrameLayout {
 
     public SwipeLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(context);
     }
 
     public SwipeLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 
-    private void init(Context context) {
-        upAnimOut = AnimationUtils.loadAnimation(context, R.anim.swipe_up_out);
-        upAnimIn = AnimationUtils.loadAnimation(context, R.anim.swipe_up_in);
-        downAnimIn = AnimationUtils.loadAnimation(context, R.anim.swipe_down_in);
-        downAnimOut = AnimationUtils.loadAnimation(context, R.anim.swipe_down_out);
-        this.context = context;
-    }
-
-
-
-    private float previousX, previousY;
     private int SWIPE_THRESHOLD;
-    private int currentIndex;
+    private int currentIndex = -1;
 
-    private int totalWidth, totalHeight;
-    private LayoutParams layoutParams;
-
-
+    private int totalHeight;
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        currentIndex = getChildCount() - 1;
-        totalWidth = right - left;
         totalHeight = bottom - top;
-        layoutParams = (LayoutParams) getLayoutParams();
+        if (currentIndex == -1) currentIndex = getChildCount() - 1;
         SWIPE_THRESHOLD = totalHeight / 4;
     }
+
+
+    private float lastRawX, lastRawY;
+    private float touchDownX = 0f, touchDownY = 0f;
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
         //TODO This method need largely refactored.
 
+        float deltaX, deltaY;
+
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-                previousX = event.getRawX();
-                previousY = event.getRawY();
+                touchDownX = event.getRawX();
+                touchDownY = event.getRawY();
                 break;
+            case MotionEvent.ACTION_MOVE:
+                deltaX = event.getRawX() - lastRawX;
+                deltaY = event.getRawY() - lastRawY;
+                if (Math.abs(deltaY) > Math.abs(deltaX)) {
+                    View currentChild = getChildAt(currentIndex);
+                    LayoutParams currentLayoutParams = (LayoutParams) currentChild.getLayoutParams();
+                    if (deltaY > 0) {
+                        if (currentIndex + 1 < getChildCount()) {
+                            View nextChild = getChildAt(currentIndex + 1);
+                            LayoutParams nextLayoutParams = (LayoutParams) nextChild.getLayoutParams();
+                            currentLayoutParams.topMargin += deltaY;
+                            currentLayoutParams.bottomMargin -= deltaY;
+                            nextLayoutParams.bottomMargin = totalHeight - currentLayoutParams.topMargin;
+                            nextLayoutParams.topMargin = currentLayoutParams.topMargin - totalHeight;
 
-            case MotionEvent.ACTION_UP:
-                float deltaY = event.getRawY() - previousY;
-                float deltaX = event.getRawX() - previousX;
-                if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > SWIPE_THRESHOLD) {
-                    if (deltaY > 0)
-                        swipeNext();
-                    else
-                        swipePrevious();
+                            nextChild.setLayoutParams(nextLayoutParams);
+
+                            currentChild.setLayoutParams(currentLayoutParams);
+
+                        } else {
+                            //TODO View touches the bottom. No child for next.
+                        }
+                    } else {
+                        if (currentIndex > 0) {
+                            View previousChild = getChildAt(currentIndex - 1);
+                            LayoutParams previousLayoutParams = (LayoutParams) previousChild.getLayoutParams();
+                            currentLayoutParams.bottomMargin -= deltaY;
+                            currentLayoutParams.topMargin += deltaY;
+
+                            previousLayoutParams.topMargin = totalHeight - currentLayoutParams.bottomMargin;
+                            previousLayoutParams.bottomMargin = currentLayoutParams.bottomMargin - totalHeight;
+
+                            previousChild.setLayoutParams(previousLayoutParams);
+
+                            currentChild.setLayoutParams(currentLayoutParams);
+
+                        } else {
+                            //TODO View touches the top. No child for previous.
+                        }
+                    }
+
                 }
                 break;
+            case MotionEvent.ACTION_UP:
+                deltaX = event.getRawX() - touchDownX;
+                deltaY = event.getRawY() - touchDownY;
+                if (Math.abs(deltaY) < Math.abs(deltaX)) return true;
 
-            case MotionEvent.ACTION_MOVE:
-                float distanceY = event.getRawY() - previousY;
-                float distanceX = event.getRawX() - previousX;
-
-                if (Math.abs(distanceY) > Math.abs(distanceX)) {
-                    if (distanceY > 0) {
-                        View currentChild = getChildAt(0);
-                        View nextChild = getChildAt(1);
-
-                        LayoutParams currentParams = (LayoutParams) currentChild.getLayoutParams();
-                        LayoutParams nextParams = (LayoutParams) nextChild.getLayoutParams();
-
-                        currentParams.topMargin = 0 + (int)distanceY;
-                        nextParams.bottomMargin = totalHeight - (int) distanceY;
-
-                        currentChild.setLayoutParams(currentParams);
-                        nextChild.setLayoutParams(nextParams);
-
+                if (Math.abs(deltaY) > SWIPE_THRESHOLD) {
+                    if (deltaY > 0) {
+                        swipeNext();
+                    } else {
+                        swipePrevious();
+                    }
+                } else {
+                    //TODO restore to currentView position
+                    if (deltaY > 0) {
 
                     } else {
-                        View currentChild = getChildAt(1);
-                        View previousChild = getChildAt(0);
-                        LayoutParams currentParams = (LayoutParams) currentChild.getLayoutParams();
-                        LayoutParams previousParams = (LayoutParams) previousChild.getLayoutParams();
-                        currentParams.bottomMargin = 0 + (int)(-distanceY);
-                        currentParams.topMargin = (int)distanceY;
 
-                        previousParams.topMargin = totalHeight - (int)(-distanceY);
-                        currentChild.setLayoutParams(currentParams);
-                        previousChild.setLayoutParams(previousParams);
                     }
                 }
-
-                invalidate();
-
                 break;
         }
+
+        lastRawX = event.getRawX();
+        lastRawY = event.getRawY();
+
         return true;
     }
 
-    //TODO swipePrevious and swipeNext should be refactored.
+    private static final String TAG = "gongmingqm10";
 
     public void swipePrevious() {
-//        if (currentIndex > 0) {
-//            getChildAt(currentIndex).startAnimation(upAnimOut);
-//            currentIndex -= 1;
-//            getChildAt(currentIndex).startAnimation(upAnimIn);
-//        }
+        if (currentIndex < 1) return;
 
-        View currentChild = getChildAt(1);
-        View previousChild = getChildAt(0);
+        final View currentChild = getChildAt(currentIndex);
+        final View previousChild = getChildAt(currentIndex - 1);
 
-        LayoutParams currentParams = (LayoutParams) currentChild.getLayoutParams();
-        LayoutParams previousParams = (LayoutParams) previousChild.getLayoutParams();
-        TranslateAnimation currentAnimation = new TranslateAnimation(0, 0, currentParams.topMargin, totalHeight);
+        final LayoutParams currentParams = (LayoutParams) currentChild.getLayoutParams();
+        final LayoutParams previousParams = (LayoutParams) previousChild.getLayoutParams();
+        TranslateAnimation currentAnimation = new TranslateAnimation(0, 0, previousParams.topMargin, 0);
         TranslateAnimation previousAnimation = new TranslateAnimation(0, 0, previousParams.topMargin, 0);
 
-        currentAnimation.setDuration(400);
-        previousAnimation.setDuration(400);
-        currentAnimation.setFillAfter(true);
-        previousAnimation.setFillAfter(true);
+        currentAnimation.setDuration(300);
+        previousAnimation.setDuration(300);
+        currentAnimation.setFillAfter(false);
+        previousAnimation.setFillAfter(false);
 
+
+        currentParams.topMargin = -totalHeight;
+        currentParams.bottomMargin = totalHeight;
+        currentChild.setLayoutParams(currentParams);
         currentChild.startAnimation(currentAnimation);
+
+        previousParams.topMargin = 0;
+        previousParams.bottomMargin = 0;
+        previousChild.setLayoutParams(previousParams);
         previousChild.startAnimation(previousAnimation);
 
-        currentParams.topMargin = totalHeight;
-        previousParams.topMargin = 0;
-//
-        currentChild.setLayoutParams(currentParams);
-        previousChild.setLayoutParams(previousParams);
-
-
-
+        currentIndex -= 1;
     }
 
     public void swipeNext() {
-//        if (currentIndex + 1 < getChildCount()) {
-//            getChildAt(currentIndex).startAnimation(downAnimOut);
-//            currentIndex += 1;
-//            getChildAt(currentIndex).startAnimation(downAnimIn);
-//        }
+        if (currentIndex + 1 >= getChildCount()) return;
 
-        View currentChild = getChildAt(0);
-        View nextChild = getChildAt(1);
+        final View currentChild = getChildAt(currentIndex);
+        final View nextChild = getChildAt(currentIndex + 1);
 
-        LayoutParams currentParams = (LayoutParams) currentChild.getLayoutParams();
-        LayoutParams nextParams = (LayoutParams) nextChild.getLayoutParams();
+        final LayoutParams currentParams = (LayoutParams) currentChild.getLayoutParams();
+        final LayoutParams nextParams = (LayoutParams) nextChild.getLayoutParams();
 
-        TranslateAnimation currentAnimation = new TranslateAnimation(0, 0, currentParams.topMargin, totalHeight);
+        final TranslateAnimation currentAnimation = new TranslateAnimation(0, 0, nextParams.topMargin, 0);
         TranslateAnimation nextAnimation = new TranslateAnimation(0, 0, nextParams.topMargin, 0);
 
-        currentAnimation.setDuration(400);
-        currentAnimation.setFillAfter(true);
-        nextAnimation.setDuration(400);
-        nextAnimation.setFillAfter(true);
+        currentAnimation.setDuration(300);
+        currentAnimation.setFillAfter(false);
+        nextAnimation.setDuration(300);
+        nextAnimation.setFillAfter(false);
 
+        currentParams.topMargin = totalHeight;
+        currentParams.bottomMargin = -totalHeight;
+        currentChild.setLayoutParams(currentParams);
         currentChild.startAnimation(currentAnimation);
+
+        nextParams.topMargin = 0;
+        nextParams.bottomMargin = 0;
+        nextChild.setLayoutParams(nextParams);
         nextChild.startAnimation(nextAnimation);
 
-
-        //TODO move this set position method to AnimationEnd listener
-        currentParams.topMargin = totalHeight;
-        nextParams.topMargin = 0;
-
-        currentChild.setLayoutParams(currentParams);
-        nextChild.setLayoutParams(nextParams);
-
+        currentIndex += 1;
     }
 
 }
