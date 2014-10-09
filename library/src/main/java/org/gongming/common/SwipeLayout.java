@@ -9,8 +9,7 @@ import android.widget.FrameLayout;
 
 public class SwipeLayout extends FrameLayout {
 
-    private static final String TAG = "gongmingqm10";
-    private final static float TRANSLATE_SPEED = 3.0f;
+    private final static float TRANSLATE_SPEED = 4.0f;
     private OnSwipeEndListener swipeEndListener;
     private boolean isInit = true;
     private int SWIPE_THRESHOLD;
@@ -19,8 +18,6 @@ public class SwipeLayout extends FrameLayout {
     private float lastRawX, lastRawY;
     private float touchDownX = 0f, touchDownY = 0f;
 
-
-    //TODO this view should care more about the margin of its children
     public SwipeLayout(Context context) {
         super(context);
     }
@@ -68,20 +65,35 @@ public class SwipeLayout extends FrameLayout {
                 if (Math.abs(deltaY) > SWIPE_THRESHOLD) {
                     swipe(deltaY);
                 } else {
-                    //TODO restore to currentView position
-                    if (deltaY > 0) {
-
-                    } else {
-
-                    }
+                    reset(deltaY);
                 }
                 break;
         }
-
         lastRawX = event.getRawX();
         lastRawY = event.getRawY();
 
         return true;
+    }
+
+    private void reset(float deltaY) {
+        Direction direction = deltaY < 0 ? Direction.TOP : Direction.BOTTOM;
+        if (reachedEnd(direction)) return;
+
+        View currentChild = getChildAt(currentIndex);
+        View nextChild = getChildAt(currentIndex + direction.getValue() * 1);
+        currentChild.startAnimation(generateTranslateAnimation(deltaY));
+        nextChild.startAnimation(generateTranslateAnimation(deltaY));
+        LayoutParams currentLayoutParams = (LayoutParams) currentChild.getLayoutParams();
+        LayoutParams nextLayoutParams = (LayoutParams) nextChild.getLayoutParams();
+
+        currentLayoutParams.setMargins(0, 0, 0, 0);
+        nextLayoutParams.setMargins(0, -totalHeight * direction.getValue(), 0, totalHeight * direction.getValue());
+
+        currentChild.setLayoutParams(currentLayoutParams);
+        nextChild.setLayoutParams(nextLayoutParams);
+        currentChild.startAnimation(generateTranslateAnimation(deltaY));
+        nextChild.startAnimation(generateTranslateAnimation(deltaY));
+
     }
 
     private void move(float deltaY) {
@@ -89,19 +101,18 @@ public class SwipeLayout extends FrameLayout {
         if (reachedEnd(direction)) return;
 
         View currentChild = getChildAt(currentIndex);
-        View previousChild = getChildAt(currentIndex + direction.getValue() * 1);   //   -1   +1
+        View nextChild = getChildAt(currentIndex + direction.getValue() * 1);   //   -1   +1
         LayoutParams currentLayoutParams = (LayoutParams) currentChild.getLayoutParams();
-        LayoutParams previousLayoutParams = (LayoutParams) previousChild.getLayoutParams();
+        LayoutParams nextLayoutParams = (LayoutParams) nextChild.getLayoutParams();
 
         int relativePosition = (deltaY < 0) ? currentLayoutParams.bottomMargin : currentLayoutParams.topMargin;
-
         currentLayoutParams.topMargin += deltaY;
         currentLayoutParams.bottomMargin -= deltaY;
-        previousLayoutParams.topMargin = (relativePosition - totalHeight) * direction.getValue();
-        previousLayoutParams.bottomMargin = -previousLayoutParams.topMargin;
+        nextLayoutParams.topMargin = (relativePosition - totalHeight) * direction.getValue();
+        nextLayoutParams.bottomMargin = -nextLayoutParams.topMargin;
 
-        previousChild.setLayoutParams(previousLayoutParams);
         currentChild.setLayoutParams(currentLayoutParams);
+        nextChild.setLayoutParams(nextLayoutParams);
     }
 
     public void swipe(float deltaY) {
@@ -135,6 +146,8 @@ public class SwipeLayout extends FrameLayout {
         currentIndex += direction.getValue();
 
     }
+
+
 
     private boolean reachedBottom(Direction direction) {
         return direction == Direction.BOTTOM && currentIndex + 1 >= getChildCount();
