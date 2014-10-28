@@ -7,19 +7,19 @@
     android:layout_height="match_parent"
     >
 
-    <org.gongming.common.swipelist.CustomView
-        android:layout_width="match_parent"
-        android:layout_height="200px"
-        android:background="#333666"
-        />
-
-    <org.gongming.common.RatioRelativeLayout
-        android:layout_width="match_parent"
+    <TextView
         android:layout_height="wrap_content"
-        android:background="@android:color/darker_gray"
-        app:ratio="0.5"
-        >
-
-    </org.gongming.common.RatioRelativeLayout>
+        android:layout_width="wrap_content"
+        android:id="@+id/textView"
+        android:text="缓存测试："
+        android:layout_gravity="center"
+        android:textSize="16sp"
+        />
+    <Button
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="Click"
+        android:id="@+id/button"
+        />
 
 </FrameLayout>

@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.View;
 
+import org.gongming.common.cache.CacheManager;
 import org.gongming.uikit.R;
 import org.gongming.uikit.fragment.RootFlipperFragment;
 import org.gongming.uikit.fragment.RootListFragment;
@@ -28,6 +29,9 @@ public class RootActivity extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_root);
+
+        CacheManager.init(getApplicationContext());
+
         ButterKnife.inject(this);
         init();
     }
