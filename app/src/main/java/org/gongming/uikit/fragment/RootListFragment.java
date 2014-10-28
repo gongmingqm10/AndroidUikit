@@ -12,11 +12,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.ViewFlipper;
 
+import org.gongming.common.PullToRefreshListView;
 import org.gongming.uikit.R;
 import org.gongming.uikit.adapter.RootListAdapter;
 
@@ -26,7 +24,7 @@ import butterknife.InjectView;
 public class RootListFragment extends Fragment {
 
     @InjectView(R.id.listView)
-    ListView listView;
+    PullToRefreshListView listView;
 
     private RootListAdapter adapter;
 
@@ -75,12 +73,32 @@ public class RootListFragment extends Fragment {
             }
         });
 
+        listView.setOnRefreshListener(new PullToRefreshListView.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(3000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        listView.post(new Runnable() {
+                           @Override
+                           public void run() {
+                               listView.onRefreshComplete();
+                           }
+                       }) ;
+                    }
+                }).start();
+            }
+        });
+
+
 
         return view;
     }
-
-
-
 
 
     private class GestureListener extends GestureDetector.SimpleOnGestureListener {
